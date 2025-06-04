@@ -232,156 +232,37 @@ class TTSMI(App):
         wh_row = [
             Text(f"{board_num}", style=self.text_theme["yellow_bold"], justify="center")
         ]
+        limits = {
+            "voltage": self.backend.chip_limits[board_num]["vdd_max"],
+            "current": self.backend.chip_limits[board_num]["tdc_limit"],
+            "power": self.backend.chip_limits[board_num]["tdp_limit"],
+            "aiclk": self.backend.chip_limits[board_num]["asic_fmax"],
+            "asic_temperature": self.backend.chip_limits[board_num]["thm_limit"],
+        }
         for telem in constants.TELEM_LIST:
             val = self.backend.device_telemetrys[board_num][telem]
-            if telem == "voltage":
-                vdd_max = self.backend.chip_limits[board_num]["vdd_max"]
-                if float(val) < float(vdd_max):
-                    wh_row.append(
-                        Text(
-                            f"{val}",
-                            style=self.text_theme["text_green"],
-                            justify="center",
-                        )
-                        + Text(
-                            f"/ {vdd_max}",
-                            style=self.text_theme["yellow_bold"],
-                            justify="center",
-                        )
+            if telem == "heartbeat":
+                wh_row.append(
+                    Text(
+                        f"{self.get_heartbeat_spinner(val)}",
+                        style=self.text_theme["text_green"],
+                        justify="center",
                     )
-                else:
-                    wh_row.append(
-                        Text(
-                            f"{val}",
-                            style=self.text_theme["attention"],
-                            justify="center",
-                        )
-                        + Text(
-                            f"/ {vdd_max}",
-                            style=self.text_theme["yellow_bold"],
-                            justify="center",
-                        )
+                )
+            elif telem in limits.keys():
+                val_style = self.text_theme["text_green"] if float(val) < float(limits[telem]) else self.text_theme["attention"]
+                wh_row.append(
+                    Text(
+                        f"{val}",
+                        style=val_style,
+                        justify="center",
                     )
-            elif telem == "current":
-                max_current = self.backend.chip_limits[board_num]["tdc_limit"]
-                if float(val) < float(max_current):
-                    wh_row.append(
-                        Text(
-                            f"{val}",
-                            style=self.text_theme["text_green"],
-                            justify="center",
-                        )
-                        + Text(
-                            f"/ {max_current}",
-                            style=self.text_theme["yellow_bold"],
-                            justify="center",
-                        )
+                    + Text(
+                        f"/ {limits[telem]}",
+                        style=self.text_theme["yellow_bold"],
+                        justify="center",
                     )
-                else:
-                    wh_row.append(
-                        Text(
-                            f"{val}",
-                            style=self.text_theme["attention"],
-                            justify="center",
-                        )
-                        + Text(
-                            f"/ {max_current}",
-                            style=self.text_theme["yellow_bold"],
-                            justify="center",
-                        )
-                    )
-            elif telem == "power":
-                max_power = self.backend.chip_limits[board_num]["tdp_limit"]
-                if float(val) < float(max_power):
-                    wh_row.append(
-                        Text(
-                            f"{val}",
-                            style=self.text_theme["text_green"],
-                            justify="center",
-                        )
-                        + Text(
-                            f"/ {max_power}",
-                            style=self.text_theme["yellow_bold"],
-                            justify="center",
-                        )
-                    )
-                else:
-                    wh_row.append(
-                        Text(
-                            f"{val}",
-                            style=self.text_theme["attention"],
-                            justify="center",
-                        )
-                        + Text(
-                            f"/ {max_power}",
-                            style=self.text_theme["yellow_bold"],
-                            justify="center",
-                        )
-                    )
-            elif telem == "aiclk":
-                asic_fmax = self.backend.chip_limits[board_num]["asic_fmax"]
-                if float(val) < float(asic_fmax):
-                    wh_row.append(
-                        Text(
-                            f"{val}",
-                            style=self.text_theme["text_green"],
-                            justify="center",
-                        )
-                        + Text(
-                            f"/ {asic_fmax}",
-                            style=self.text_theme["yellow_bold"],
-                            justify="center",
-                        )
-                    )
-                else:
-                    wh_row.append(
-                        Text(
-                            f"{val}",
-                            style=self.text_theme["attention"],
-                            justify="center",
-                        )
-                        + Text(
-                            f"/ {asic_fmax}",
-                            style=self.text_theme["yellow_bold"],
-                            justify="center",
-                        )
-                    )
-            elif telem == "asic_temperature":
-                max_temp = self.backend.chip_limits[board_num]["thm_limit"]
-                if float(val) < float(max_temp):
-                    wh_row.append(
-                        Text(
-                            f"{val}",
-                            style=self.text_theme["text_green"],
-                            justify="center",
-                        )
-                        + Text(
-                            f"/ {max_temp}",
-                            style=self.text_theme["yellow_bold"],
-                            justify="center",
-                        )
-                    )
-                else:
-                    wh_row.append(
-                        Text(
-                            f"{val}",
-                            style=self.text_theme["attention"],
-                            justify="center",
-                        )
-                        + Text(
-                            f"/ {max_temp}",
-                            style=self.text_theme["yellow_bold"],
-                            justify="center",
-                        )
-                    )
-            elif telem == "heartbeat":
-                    wh_row.append(
-                        Text(
-                            f"{self.get_heartbeat_spinner(val)}",
-                            style=self.text_theme["text_green"],
-                            justify="center",
-                        )
-                    )
+                )
             else:
                 wh_row.append(
                     Text(f"{val}", style=self.text_theme["text_green"], justify="center")
@@ -421,43 +302,19 @@ class TTSMI(App):
             for info in constants.DEV_INFO_LIST:
                 val = self.backend.device_infos[i][info]
                 if info == "board_type":
+                    board_type_text = Text(
+                            f"{val}",
+                            style=self.text_theme["text_green"],
+                            justify="center",
+                        )
                     if val == "n300":
-                        if device.is_remote():
-                            rows.append(
-                                Text(
-                                    f"{val}",
-                                    style=self.text_theme["text_green"],
-                                    justify="center",
-                                )
-                                + Text(
-                                    " R",
-                                    style=self.text_theme["yellow_bold"],
-                                    justify="center",
-                                )
-                            )
-                        else:
-                            rows.append(
-                                Text(
-                                    f"{val}",
-                                    style=self.text_theme["text_green"],
-                                    justify="center",
-                                )
-                                + Text(
-                                    f" L",
-                                    style=self.text_theme["yellow_bold"],
-                                    justify="center",
-                                )
-                            )
-                    else:
-                        rows.append(
-                            Text(
-                                f"{val}",
-                                style=self.text_theme["text_green"],
+                        board_type_text += Text(
+                                " R" if device.is_remote() else " L",
+                                style=self.text_theme["yellow_bold"],
                                 justify="center",
                             )
-                        )
+                    rows.append(board_type_text)
                 elif info == "pcie_width":
-                    max_link_width = self.backend.pci_properties[i]["max_link_width"]
                     if device.is_remote():
                         rows.append(
                             Text(
@@ -467,34 +324,21 @@ class TTSMI(App):
                             )
                         )
                     else:
-                        if val < max_link_width:
-                            rows.append(
-                                Text(
-                                    f"x{val}",
-                                    style=self.text_theme["attention"],
-                                    justify="center",
-                                )
-                                + Text(
-                                    f" / x{max_link_width}",
-                                    style=self.text_theme["yellow_bold"],
-                                    justify="center",
-                                )
+                        max_link_width = self.backend.pci_properties[i]["max_link_width"]
+                        val_style = self.text_theme["attention"] if val < max_link_width else self.text_theme["text_green"]
+                        rows.append(
+                            Text(
+                                f"x{val}",
+                                style=val_style,
+                                justify="center",
                             )
-                        else:
-                            rows.append(
-                                Text(
-                                    f"x{val}",
-                                    style=self.text_theme["text_green"],
-                                    justify="center",
-                                )
-                                + Text(
-                                    f" / x{max_link_width}",
-                                    style=self.text_theme["yellow_bold"],
-                                    justify="center",
-                                )
+                            + Text(
+                                f" / x{max_link_width}",
+                                style=self.text_theme["yellow_bold"],
+                                justify="center",
                             )
+                        )
                 elif info == "pcie_speed":
-                    max_link_speed = self.backend.pci_properties[i]["max_link_speed"]
                     if device.is_remote():
                         rows.append(
                             Text(
@@ -504,6 +348,7 @@ class TTSMI(App):
                             )
                         )
                     else:
+                        max_link_speed = self.backend.pci_properties[i]["max_link_speed"]
                         if max_link_speed == "N/A":
                             rows.append(
                                 Text(
@@ -530,24 +375,12 @@ class TTSMI(App):
                                     justify="center",
                                 )
                             )
-                        elif float(val) < float(max_link_speed):
-                            rows.append(
-                                Text(
-                                    f"Gen{val}",
-                                    style=self.text_theme["attention"],
-                                    justify="center",
-                                )
-                                + Text(
-                                    f" / Gen{max_link_speed}",
-                                    style=self.text_theme["yellow_bold"],
-                                    justify="center",
-                                )
-                            )
                         else:
+                            val_style = self.text_theme["attention"] if float(val) < float(max_link_speed) else self.text_theme["text_green"]
                             rows.append(
                                 Text(
                                     f"Gen{val}",
-                                    style=self.text_theme["text_green"],
+                                    style=val_style,
                                     justify="center",
                                 )
                                 + Text(
@@ -563,20 +396,15 @@ class TTSMI(App):
                             Text("N/A", style=self.text_theme["gray"], justify="center")
                         )
                     else:
-                        if val:
-                            rows.append(
-                                Text(
-                                    "Y",
-                                    style=self.text_theme["text_green"],
-                                    justify="center",
-                                )
+                        val_formatted = "Y" if val else "N"
+                        val_style = self.text_theme["text_green"] if val else self.text_theme["attention"]
+                        rows.append(
+                            Text(
+                                val_formatted,
+                                style=val_style,
+                                justify="center",
                             )
-                        else:
-                            rows.append(
-                                Text(
-                                    "N", style=self.text_theme["attention"], justify="center"
-                                )
-                            )
+                        )
                 elif info == "dram_speed":
                     # TODO: Update once DRAM status becomes availible
                     if device.as_bh():
@@ -584,35 +412,19 @@ class TTSMI(App):
                             Text("N/A", style=self.text_theme["gray"], justify="center")
                         )
                     else:
-                        if val:
-                            rows.append(
-                                Text(
-                                    f"{val}",
-                                    style=self.text_theme["text_green"],
-                                    justify="center",
-                                )
-                            )
-                        else:
-                            rows.append(
-                                Text(
-                                    "N/A",
-                                    style=self.text_theme["red_bold"],
-                                    justify="center",
-                                )
-                            )
-                else:
-                    if val == "N/A":
-                        rows.append(
-                            Text(f"{val}", style=self.text_theme["gray"], justify="center")
-                        )
-                    else:
+                        val_style = self.text_theme["text_green"] if val else self.text_theme["red_bold"]
                         rows.append(
                             Text(
-                                f"{val}",
-                                style=self.text_theme["text_green"],
+                                f"{val}" if val else "N/A",
+                                style=val_style,
                                 justify="center",
                             )
                         )
+                else:
+                    val_style = self.text_theme["gray"] if val == "N/A" else self.text_theme["text_green"]
+                    rows.append(
+                        Text(f"{val}", style=val_style, justify="center")
+                    )
             all_rows.append(rows)
         return all_rows
 
