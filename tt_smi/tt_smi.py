@@ -678,6 +678,11 @@ def parse_args():
         action="store_true",
         help="Don't detect devices post reset",
     )
+    parser.add_argument(
+        "--blink",
+        type=int,
+        help="Blink LED on the card at the provided PCI index.",
+    )
     args = parser.parse_args()
     return args
 
@@ -700,6 +705,28 @@ def tt_smi_main(backend: TTSMIBackend, args):
     if args.list:
         backend.print_all_available_devices()
         sys.exit(0)
+    if args.blink is not None:
+        # Add ARC MSG to blink LED of device at PCI index
+        i = args.blink
+        try:
+            device = backend.devices[i]
+            # BH only right now
+            # TODO: If this is a board with no LED, is this no-op, or will message fail? Is the message code reserved on WH?
+            device.arc_msg(0xC5)
+            # TODO: Cancel blink
+            print(
+                CMD_LINE_COLOR.BLUE,
+                f"Blinking LED on device at PCI index {i}.",
+                CMD_LINE_COLOR.ENDC,
+            )
+            sys.exit(0)
+        except IndexError:
+            print(
+                CMD_LINE_COLOR.RED,
+                f"No device available at PCI index {i}. Use -ls to see all devices available.",
+                CMD_LINE_COLOR.ENDC,
+            )
+            sys.exit(1)
     if args.glx_list_tray_to_device:
         check_is_galaxy(backend, "-glx_list_tray_to_device")
         if is_vm():
